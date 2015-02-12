@@ -7,6 +7,7 @@ import(
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -56,6 +57,12 @@ func main(){
 	for _, change := range changes {
 		changeTime, err := time.Parse("2006-01-02 15:04:05.000000000", change.Updated)
 		if err == nil && changeTime.After(lastrun) {
+			if (strings.HasPrefix(change.Project, "CyanogenMod/android_device") &&
+				!strings.HasPrefix(change.Project, "CyanogenMod/android_device_oppo")) ||
+				(strings.HasPrefix(change.Project, "CyanogenMod/android_kernel") &&
+				!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
+					continue
+				}
 			fmt.Printf("%s\t\t%s\t\t%s\n", change.Project, change.Subject, changeTime.Format("01-02 15:04"))
 		}
 	}
