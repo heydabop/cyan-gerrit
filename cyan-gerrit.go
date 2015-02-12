@@ -19,7 +19,7 @@ func main(){
 		Sortkey string
 		Number int
 	}
-	/*lastrunData, err := ioutil.ReadFile("lastrun")
+	lastrunData, err := ioutil.ReadFile("lastrun")
 	var lastrun time.Time
 	if os.IsNotExist(err) {
 		lastrun = time.Now().AddDate(0, 0, -1)
@@ -30,9 +30,9 @@ func main(){
 		if err != nil {
 			os.Exit(2)
 		}
-	}*/
+	}
 
-	resp, err := http.Get("http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=3")
+	resp, err := http.Get("http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=50")
 	if err != nil {
 		os.Exit(3)
 	}
@@ -42,14 +42,16 @@ func main(){
 		os.Exit(4)
 	}
 	body = bytes.TrimPrefix(body, []byte(")]}'\n"))
-	fmt.Printf("%s\n", body)
 	var changes []Gerrit_s
 	err = json.Unmarshal(body, &changes)
 	if err != nil {
 		os.Exit(5)
 	}
 	for _, change := range changes {
-		fmt.Printf("%+v\n", change)
+		changeTime, err := time.Parse("2006-01-02 15:04:05.000000000", change.Updated)
+		if err == nil && changeTime.After(lastrun) {
+			fmt.Printf("%+v\n", change)
+		}
 	}
 
 	now := time.Now().String()
