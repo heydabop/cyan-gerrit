@@ -3,14 +3,22 @@ package main
 import(
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"os"
 	"time"
+	"strings"
 )
 
 func main(){
-	lastrunData, err := ioutil.ReadFile("lastrun")
+	type gerrit_s struct {
+		Project string
+		Subject string
+		Created string
+		Updated string
+		Sortkey string
+		Number int
+	}
+	/*lastrunData, err := ioutil.ReadFile("lastrun")
 	var lastrun time.Time
 	if os.IsNotExist(err) {
 		lastrun = time.Now().AddDate(0, 0, -1)
@@ -21,20 +29,20 @@ func main(){
 		if err != nil {
 			os.Exit(2)
 		}
-	}
+	}*/
 
-	request := fmt.Sprintf("http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0+age:%dm", uint64(math.Ceil(time.Since(lastrun).Minutes())))
-	fmt.Println(request)
-	resp, err := http.Get(request)
+	resp, err := http.Get("http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=2")
 	if err != nil {
 		os.Exit(3)
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body_data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		os.Exit(4)
 	}
-	fmt.Println(string(body))
+	body := string(body_data)
+	body = strings.TrimPrefix(body, ")]}'\n")
+	fmt.Println(body)
 
 	now := time.Now().String()
 	ioutil.WriteFile("lastrun", []byte(now), 0644)
