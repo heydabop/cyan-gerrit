@@ -1,16 +1,17 @@
 package main
 
 import(
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
-	"strings"
 )
 
 func main(){
-	type gerrit_s struct {
+	type Gerrit_s struct {
 		Project string
 		Subject string
 		Created string
@@ -31,18 +32,25 @@ func main(){
 		}
 	}*/
 
-	resp, err := http.Get("http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=2")
+	resp, err := http.Get("http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=3")
 	if err != nil {
 		os.Exit(3)
 	}
 	defer resp.Body.Close()
-	body_data, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		os.Exit(4)
 	}
-	body := string(body_data)
-	body = strings.TrimPrefix(body, ")]}'\n")
-	fmt.Println(body)
+	body = bytes.TrimPrefix(body, []byte(")]}'\n"))
+	fmt.Printf("%s\n", body)
+	var changes []Gerrit_s
+	err = json.Unmarshal(body, &changes)
+	if err != nil {
+		os.Exit(5)
+	}
+	for _, change := range changes {
+		fmt.Printf("%+v\n", change)
+	}
 
 	now := time.Now().String()
 	ioutil.WriteFile("lastrun", []byte(now), 0644)
