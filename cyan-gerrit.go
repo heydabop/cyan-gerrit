@@ -7,11 +7,13 @@ import(
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
 func main(){
+	now := time.Now()
 	type Gerrit_s struct { //struct for unmarshalling JSON
 		Project string
 		Subject string
@@ -58,6 +60,12 @@ func main(){
 	}
 
 	fmt.Println("Project\t\tSubject\t\tTime") //print changes
+	_, offset_seconds := now.Zone() //get offset of current timezone to allow printing local time
+	offset, err := time.ParseDuration(strconv.FormatInt(int64(offset_seconds), 10)+"s")
+	if err != nil {
+		fmt.Println("Error parsing tz offset: ", err)
+		os.Exit(6)
+	}
 	for _, change := range changes {
 		changeTime, err := time.Parse("2006-01-02 15:04:05.000000000", change.Updated) //parse last updated time for change
 		if err == nil && changeTime.After(lastrun) { //if there was no error and updated time is after last run time
@@ -67,9 +75,12 @@ func main(){
 				!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
 					continue
 				}
-			fmt.Printf("%s\t\t%s\t\t%s\n", change.Project, change.Subject, changeTime.Format("01-02 15:04")) //print change project, subject, and updated time
+			fmt.Printf("%s\t\t%s\t\t%s\n", //print change project, subject, and updated time
+				change.Project,
+				change.Subject,
+				changeTime.Add(offset).Format("01-02 15:04"))
 		}
 	}
 
-	ioutil.WriteFile("lastrun", []byte(time.Now().String()), 0644) //update lastrun file
+	ioutil.WriteFile("lastrun", []byte(now.String()), 0644) //update lastrun file
 }
