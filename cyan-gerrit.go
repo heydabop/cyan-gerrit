@@ -19,8 +19,8 @@ func main(){
 		Subject string
 		Created string
 		Updated string
-		Sortkey string
-		Number int
+		Sortkey string `json:"_sortkey"`
+		Number int `json:"_number"`
 	}
 
 	lastrunData, err := ioutil.ReadFile("lastrun") //file containing time program was last run
@@ -59,7 +59,7 @@ func main(){
 		os.Exit(5)
 	}
 
-	fmt.Println("Project\t\tSubject\t\tTime") //print changes
+	fmt.Println("Project\t\tSubject\t\tTime\t\tURL") //print changes
 	_, offset_seconds := now.Zone() //get offset of current timezone to allow printing local time
 	offset, err := time.ParseDuration(strconv.FormatInt(int64(offset_seconds), 10)+"s")
 	if err != nil {
@@ -75,10 +75,11 @@ func main(){
 				!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
 					continue
 				}
-			fmt.Printf("%s\t\t%s\t\t%s\n", //print change project, subject, and updated time
+			fmt.Printf("%s\t\t%s\t\t%s\t\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
 				change.Project,
 				change.Subject,
-				changeTime.Add(offset).Format("01-02 15:04"))
+				changeTime.Add(offset).Format("01-02 15:04"), //print time in local zone
+				change.Number)
 		}
 	}
 
