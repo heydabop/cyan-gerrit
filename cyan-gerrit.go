@@ -38,49 +38,63 @@ func main(){
 		}
 	}
 
-	resp, err := http.Get("http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=50")
-	if err != nil {
-		fmt.Println("Error getting JSON data: ", err)
-		os.Exit(3)
-	}
-	defer resp.Body.Close()
+	lastSortKey := ""
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading JSON data: ", err)
-		os.Exit(4)
-	}
-	body = bytes.TrimPrefix(body, []byte(")]}'\n")) //get rid of odd delimiters at beginning of response
+	fmt.Println("Project\t\tSubject\t\tTime\t\tURL") //print changes header
+FetchLoop:
+	for ;true; { //run until find a change with updated time before lastrun time (potential for infinite loop if time.Parse constantly fails
+		request := "http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=50"
+		if lastSortKey != "" { //if lastSortKey isn't blank, continue query starting after last seen change
+			request += "&N=" + lastSortKey
+		}
 
-	var changes []Gerrit_s
-	err = json.Unmarshal(body, &changes)
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON data: ", err)
-		os.Exit(5)
-	}
+		resp, err := http.Get(request)
+		if err != nil {
+			fmt.Println("Error getting JSON data: ", err)
+			os.Exit(3)
+		}
+		defer resp.Body.Close()
 
-	fmt.Println("Project\t\tSubject\t\tTime\t\tURL") //print changes
-	_, offset_seconds := now.Zone() //get offset of current timezone to allow printing local time
-	offset, err := time.ParseDuration(strconv.FormatInt(int64(offset_seconds), 10)+"s")
-	if err != nil {
-		fmt.Println("Error parsing tz offset: ", err)
-		os.Exit(6)
-	}
-	for _, change := range changes {
-		changeTime, err := time.Parse("2006-01-02 15:04:05.000000000", change.Updated) //parse last updated time for change
-		if err == nil && changeTime.After(lastrun) { //if there was no error and updated time is after last run time
-			if (strings.HasPrefix(change.Project, "CyanogenMod/android_device") && //skip any device commits that aren't an oppo device
-				!strings.HasPrefix(change.Project, "CyanogenMod/android_device_oppo")) ||
-				(strings.HasPrefix(change.Project, "CyanogenMod/android_kernel") && //skip any kernel commits that aren't oneplus
-				!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading JSON data: ", err)
+			os.Exit(4)
+		}
+		body = bytes.TrimPrefix(body, []byte(")]}'\n")) //get rid of odd delimiters at beginning of response
+
+		var changes []Gerrit_s
+		err = json.Unmarshal(body, &changes)
+		if err != nil {
+			fmt.Println("Error unmarshalling JSON data: ", err)
+			os.Exit(5)
+		}
+
+		_, offset_seconds := now.Zone() //get offset of current timezone to allow printing local time
+		offset, err := time.ParseDuration(strconv.FormatInt(int64(offset_seconds), 10)+"s")
+		if err != nil {
+			fmt.Println("Error parsing tz offset: ", err)
+			os.Exit(6)
+		}
+		for _, change := range changes {
+			changeTime, err := time.Parse("2006-01-02 15:04:05.000000000", change.Updated) //parse last updated time for change
+			if err == nil {
+				if changeTime.Before(lastrun) { //if updated time is before lastrun time, break loop
+					break FetchLoop
+				}
+				if (strings.HasPrefix(change.Project, "CyanogenMod/android_device") && //skip any device commits that aren't an oppo device
+					!strings.HasPrefix(change.Project, "CyanogenMod/android_device_oppo")) ||
+					(strings.HasPrefix(change.Project, "CyanogenMod/android_kernel") && //skip any kernel commits that aren't oneplus
+					!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
 					continue
 				}
-			fmt.Printf("%s\t\t%s\t\t%s\t\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
-				change.Project,
-				change.Subject,
-				changeTime.Add(offset).Format("01-02 15:04"), //print time in local zone
-				change.Number)
+				fmt.Printf("%s\t\t%s\t\t%s\t\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
+					change.Project,
+					change.Subject,
+					changeTime.Add(offset).Format("01-02 15:04"), //print time in local zone
+					change.Number)
+			}
 		}
+		lastSortKey = changes[len(changes)-1].Sortkey //update last Sortkey in slice
 	}
 
 	ioutil.WriteFile("lastrun", []byte(now.String()), 0644) //update lastrun file
