@@ -1,6 +1,6 @@
 package main
 
-import(
+import (
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -12,7 +12,7 @@ import(
 	"time"
 )
 
-func main(){
+func main() {
 	now := time.Now()
 	type Gerrit_s struct { //struct for unmarshalling JSON
 		Project string
@@ -20,11 +20,11 @@ func main(){
 		Created string
 		Updated string
 		Sortkey string `json:"_sortkey"`
-		Number int `json:"_number"`
+		Number  int    `json:"_number"`
 	}
 
 	lastrunData, err := ioutil.ReadFile("lastrun") //file containing time program was last run
-	var lastrun time.Time //time that program was last run
+	var lastrun time.Time                          //time that program was last run
 	if os.IsNotExist(err) {
 		lastrun = time.Now().AddDate(0, 0, -1) //if lastrun file doesn't exist, set to 1 day ago
 	} else if err != nil {
@@ -42,7 +42,7 @@ func main(){
 
 	fmt.Println("Project\t\tSubject\t\tTime\t\tURL") //print changes header
 FetchLoop:
-	for ;true; { //run until find a change with updated time before lastrun time (potential for infinite loop if time.Parse constantly fails
+	for true { //run until find a change with updated time before lastrun time (potential for infinite loop if time.Parse constantly fails
 		request := "http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=50"
 		if lastSortKey != "" { //if lastSortKey isn't blank, continue query starting after last seen change
 			request += "&N=" + lastSortKey
@@ -70,7 +70,7 @@ FetchLoop:
 		}
 
 		_, offset_seconds := now.Zone() //get offset of current timezone to allow printing local time
-		offset, err := time.ParseDuration(strconv.FormatInt(int64(offset_seconds), 10)+"s")
+		offset, err := time.ParseDuration(strconv.FormatInt(int64(offset_seconds), 10) + "s")
 		if err != nil {
 			fmt.Println("Error parsing tz offset: ", err)
 			os.Exit(6)
@@ -84,7 +84,7 @@ FetchLoop:
 				if (strings.HasPrefix(change.Project, "CyanogenMod/android_device") && //skip any device commits that aren't an oppo device
 					!strings.HasPrefix(change.Project, "CyanogenMod/android_device_oppo")) ||
 					(strings.HasPrefix(change.Project, "CyanogenMod/android_kernel") && //skip any kernel commits that aren't oneplus
-					!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
+						!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
 					continue
 				}
 				fmt.Printf("%s\t\t%s\t\t%s\t\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
