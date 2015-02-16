@@ -40,7 +40,7 @@ func main() {
 
 	lastSortKey := ""
 
-	fmt.Println("Project\t\tSubject\t\tTime\t\tURL") //print changes header
+	fmt.Printf("%-30s\t%-100s\t%-10s\t%s\n", "Project", "Subject", "Time", "URL") //print changes header
 FetchLoop:
 	for true { //run until find a change with updated time before lastrun time (potential for infinite loop if time.Parse constantly fails
 		request := "http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=50"
@@ -87,8 +87,8 @@ FetchLoop:
 						!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
 					continue
 				}
-				fmt.Printf("%s\t\t%s\t\t%s\t\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
-					change.Project,
+				fmt.Printf("%-30.30s\t%-100.100s\t%-10.10s\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
+					strings.TrimPrefix(change.Project, "CyanogenMod/android_"),
 					change.Subject,
 					changeTime.Add(offset).Format("01-02 15:04"), //print time in local zone
 					change.Number)
