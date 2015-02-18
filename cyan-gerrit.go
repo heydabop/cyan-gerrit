@@ -87,7 +87,7 @@ FetchLoop:
 						!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
 					continue
 				}
-				fmt.Printf("%-30.30s\t%-100.100s\t%-10.10s\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
+				fmt.Printf("%-30.30s\t%-100.100s\t%-11.11s\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
 					strings.TrimPrefix(change.Project, "CyanogenMod/android_"),
 					change.Subject,
 					changeTime.Add(offset).Format("01-02 15:04"), //print time in local zone
