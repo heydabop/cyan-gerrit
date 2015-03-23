@@ -14,7 +14,7 @@ import (
 
 func main() {
 	now := time.Now()
-	type Gerrit_s struct { //struct for unmarshalling JSON
+	type GerritS struct { //struct for unmarshalling JSON
 		Project string
 		Subject string
 		Created string
@@ -62,15 +62,15 @@ FetchLoop:
 		}
 		body = bytes.TrimPrefix(body, []byte(")]}'\n")) //get rid of odd delimiters at beginning of response
 
-		var changes []Gerrit_s
+		var changes []GerritS
 		err = json.Unmarshal(body, &changes)
 		if err != nil {
 			fmt.Println("Error unmarshalling JSON data: ", err)
 			os.Exit(5)
 		}
 
-		_, offset_seconds := now.Zone() //get offset of current timezone to allow printing local time
-		offset, err := time.ParseDuration(strconv.FormatInt(int64(offset_seconds), 10) + "s")
+		_, offsetSeconds := now.Zone() //get offset of current timezone to allow printing local time
+		offset, err := time.ParseDuration(strconv.FormatInt(int64(offsetSeconds), 10) + "s")
 		if err != nil {
 			fmt.Println("Error parsing tz offset: ", err)
 			os.Exit(6)
