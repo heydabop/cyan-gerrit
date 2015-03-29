@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/mgutz/ansi"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -42,7 +43,7 @@ func main() {
 
 	fmt.Printf("%-30s\t%-100s\t%-10s\t%s\n", "Project", "Subject", "Time", "URL") //print changes header
 FetchLoop:
-	for true { //run until find a change with updated time before lastrun time (potential for infinite loop if time.Parse constantly fails
+	for i := 0; true; { //run until find a change with updated time before lastrun time (potential for infinite loop if time.Parse constantly fails
 		request := "http://review.cyanogenmod.org/changes/?q=status:merged+branch:cm-12.0&n=50"
 		if lastSortKey != "" { //if lastSortKey isn't blank, continue query starting after last seen change
 			request += "&N=" + lastSortKey
@@ -75,7 +76,18 @@ FetchLoop:
 			fmt.Println("Error parsing tz offset: ", err)
 			os.Exit(6)
 		}
+
+		//initialize color codes for alternating backgrounds
+		whiteOnBlack := ansi.ColorCode("white:black")
+		whiteOnGrey := ansi.ColorCode("white:black+h")
+
 		for _, change := range changes {
+			var color string
+			if i%2 == 0 { //alternate color background
+				color = whiteOnBlack
+			} else {
+				color = whiteOnGrey
+			}
 			changeTime, err := time.Parse("2006-01-02 15:04:05.000000000", change.Updated) //parse last updated time for change
 			if err == nil {
 				if changeTime.Before(lastrun) { //if updated time is before lastrun time, break loop
@@ -87,11 +99,13 @@ FetchLoop:
 						!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
 					continue
 				}
-				fmt.Printf("%-30.30s\t%-100.100s\t%-11.11s\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
+				fmt.Printf("%s%-30.30s\t%-100.100s\t%-11.11s\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
+					color, //color background black or grey
 					strings.TrimPrefix(change.Project, "CyanogenMod/android_"),
 					change.Subject,
 					changeTime.Add(offset).Format("01-02 15:04"), //print time in local zone
 					change.Number)
+				i++ //only increment i if line printed
 			}
 		}
 		lastSortKey = changes[len(changes)-1].Sortkey //update last Sortkey in slice
