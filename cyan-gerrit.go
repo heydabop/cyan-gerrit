@@ -88,7 +88,7 @@ func main() {
 			if (strings.HasPrefix(change.Project, "CyanogenMod/android_device") && //skip any device commits that aren't an oppo device
 				!strings.HasPrefix(change.Project, "CyanogenMod/android_device_oppo")) ||
 				(strings.HasPrefix(change.Project, "CyanogenMod/android_kernel") && //skip any kernel commits that aren't oneplus
-				!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
+					!strings.HasPrefix(change.Project, "CyanogenMod/android_kernel_oneplus")) {
 				continue
 			}
 			fmt.Printf("%s%-30.30s\t%-100.100s\t%-11.11s\thttp://review.cyanogenmod.org/#/c/%d/\n", //print change project, subject, updated time, and URL
